@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -17,6 +18,7 @@ const userSchema = new mongoose.Schema(
         },
         message: (props) => `Email (${props.value}) is invalid!`,
       },
+      unique: true,
     },
 
     password: {
@@ -48,6 +50,44 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// PRE SAVE HOOK
+userSchema.pre("save", async function (next) {
+  // only run this function if otp is modified
+  if (!this.isModified("otp") || !this.otp) return next();
+
+  // hash the otp with the cost of 12
+  this.otp = await bcrypt.hash(this.otp.toString(), 12);
+
+  console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
+
+  next();
+});
+
+// PRE SAVE HOOK
+userSchema.pre("save", async function (next) {
+  // only run this function if password is modified
+  if (!this.isModified("password") || !this.password) return next();
+
+  // hash the password with the cost of 12
+  this.password = await bcrypt.hash(this.password.toString(), 12);
+
+  console.log(this.password.toString(), "FROM PRE SAVE HOOK");
+
+  next();
+});
+
+// METHOD
+userSchema.methods.correctOTP = async function (candidateOTP, userOTP) {
+  return await bcrypt.compare(candidateOTP, userOTP);
+};
+
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = new mongoose.model("User", userSchema);
 
