@@ -1,11 +1,11 @@
 const User = require("../Models/User");
 const catchAsync = require("../utilities/catchAsync");
 const otpGenerator = require("otp-generator");
-const jwt = require("jsonwebtoken")
-
+const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 
 // Sign JWT Token
-const signToken = () => jwt.sign({userId}, process.env.TOKEN_KEY);
+const signToken = () => jwt.sign({ userId }, process.env.TOKEN_KEY);
 // Register New User
 exports.register = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -61,6 +61,7 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
   });
 
   const otp_expiry_time = Date.now() + 10 * 60 * 1000; // 10 mins after otp is created
+
   const user = await User.findByIdAndUpdate(
     userId,
     {
@@ -78,6 +79,44 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
   });
 });
 
+// Resend OTP
+
+exports.resendOTP = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({
+    email,
+  });
+
+  if (!user) {
+    return res.status(400).json({
+      status: "error",
+      message: "Email is Invalid",
+    });
+  }
+
+  // generate new otp
+  const new_otp = otpGenerator.generate(4, {
+    upperCaseAlphabets: false,
+    specialChars: false,
+    lowerCaseAlphabets: false,
+  });
+
+  const otp_expiry_time = Date.now() + 10 * 60 * 1000; // 10 mins after otp is created
+
+  user.otp_expiry_time = otp_expiry_time;
+  user.otp = new_otp;
+
+  await user.save({});
+
+  // TODO: Send OTP Via Mail
+
+  res.status(200).json({
+    status: "success",
+    message: "OTP Sent Successfully!",
+  });
+});
+
 // Verify OTP
 
 exports.verifyOTP = catchAsync(async (req, res, next) => {
@@ -88,84 +127,132 @@ exports.verifyOTP = catchAsync(async (req, res, next) => {
     otp_expiry_time: { $gt: Date.now() },
   });
 
-  if(!user){
+  if (!user) {
     return res.status(400).json({
-        status: "error",
-        message: "Email invalid or OTP has expired",
-    })
-  } 
-
-  if(user.verified){
-    return res.status(400).json({
-        status: "error",
-        message: "Email is already verified",
-    })
+      status: "error",
+      message: "Email invalid or OTP has expired",
+    });
   }
 
-  if(!( await user.correctOTP(otp, user.otp))) {
-        return res.status(400).json({
-            status: "error",
-            message: "OTP is incorrect",
-         })
+  if (user.verified) {
+    return res.status(400).json({
+      status: "error",
+      message: "Email is already verified",
+    });
+  }
+
+  if (!(await user.correctOTP(otp, user.otp))) {
+    return res.status(400).json({
+      status: "error",
+      message: "OTP is incorrect",
+    });
   }
 
   // OTP is correct
   user.verified = true;
   user.otp = undefined;
 
-  await user.save({new: true, validateModifiedOnly: true});
+  await user.save({ new: true, validateModifiedOnly: true });
 
- const token = signToken(user._id);
+  const token = signToken(user._id);
 
- res.status(200).json({
+  res.status(200).json({
     status: "success",
     token: token,
     message: "OTP verified successfully",
     user_id: user._id,
- })
-
- 
+  });
 });
 
 // Login
 
-exports.login = catchAsync(async(req, res, next) => {
-    const {email, password} = req.body;
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({
+      status: "error",
+      message: "Email and password are required",
+    });
+  }
+  const user = await User.findOne({
+    email: email,
+  }).select("+password");
 
-    if(!email || !password){
-        return res.status(400).json({
-            status: "error",
-            message: "Email and password are required",
+  if (!user || !user.password) {
+    return res.status(400).json({
+      status: "error",
+      message: "No record found for this email",
+    });
+  }
 
-        })
-    }
-    const user = await User.findOne({
-        email: email
-    }).select("+password");
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    res.status(400).json({
+      status: "error",
+      message: "Incorrect password or email",
+    });
+  }
 
-    if(!user || !user.password){
-       return  res.status(400).json({
-            status: "error",
-            message: "No record found for this email",
-        })
-    }
+  const token = signToken(user._id);
 
-    if(!user || !(await user.correctPassword(password, user.password))){
-        res.status(400).json({
-            status: 'error',
-            message: 'Incorrect password or email',
-        })
-    }
-
-    const token = signToken(user._id);
-
-    res.status(200).json({
-        status: "success",
-        token: token,
-        message: "Logged in successfully",
-        user_id: user._id,
-    })
-})
+  res.status(200).json({
+    status: "success",
+    token: token,
+    message: "Logged in successfully",
+    user_id: user._id,
+  });
+});
 
 // Protect
+exports.protect = catchAsync(async (req, res, next) => {
+  try {
+    // 1) Getting token and check if it's true
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies.jwt) {
+      token = req.cookies.jwt;
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        message: "You are not logged in! Please log in to access application",
+      });
+    }
+
+    // 2) Verification of token
+    const decoded = await promisify(jwt.verify)(token, process.env.TOKEN_KEY);
+
+    console.log(decoded);
+
+    // 3) Check if user still exists
+    const this_user = await User.findById(decoded.userId);
+
+    if (!this_user) {
+      return res.status(401).json({
+        message: "The user belonging to this token does no longer exists.",
+      });
+    }
+
+    // 4) Check if user changed password after the token was issued
+    if (this_user.changedPasswordAfter(decoded.iat)) {
+      return res.status(401).json({
+        message: "User recently changed password! Please log in again.",
+      });
+    }
+
+    // GRANT ACCESS TO PROTECTED ROUTES
+    req.user = this_user;
+    next();
+  } catch (error) {
+    console.log(error);
+    console.log("Protect endpoint failed!");
+    res.status(400).json({
+      status: "error",
+      message: "Authentication failed",
+    });
+  }
+});

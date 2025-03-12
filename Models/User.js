@@ -9,6 +9,19 @@ const userSchema = new mongoose.Schema(
       required: [true, "Name is required"],
       trim: true,
     },
+    jobTitle: {
+      type: String,
+    },
+    bio: {
+      type: String,
+      trim: true,
+    },
+    country: {
+      type: String,
+    },
+    avatar: {
+      type: String,
+    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -45,6 +58,9 @@ const userSchema = new mongoose.Schema(
       enum: ["Online", "Offline"],
       default: "Offline",
     },
+    socketId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -54,25 +70,19 @@ const userSchema = new mongoose.Schema(
 // PRE SAVE HOOK
 userSchema.pre("save", async function (next) {
   // only run this function if otp is modified
-  if (!this.isModified("otp") || !this.otp) return next();
+  if (this.isModified("otp") || this.otp) {
+    // hash the otp with the cost of 12
+    this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
-  // hash the otp with the cost of 12
-  this.otp = await bcrypt.hash(this.otp.toString(), 12);
+    console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
+  }
 
-  console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
+  if (this.isModified("password") || this.password) {
+    // hash the password with the cost of 12
+    this.password = await bcrypt.hash(this.password.toString(), 12);
 
-  next();
-});
-
-// PRE SAVE HOOK
-userSchema.pre("save", async function (next) {
-  // only run this function if password is modified
-  if (!this.isModified("password") || !this.password) return next();
-
-  // hash the password with the cost of 12
-  this.password = await bcrypt.hash(this.password.toString(), 12);
-
-  console.log(this.password.toString(), "FROM PRE SAVE HOOK");
+    console.log(this.password.toString(), "FROM PRE SAVE HOOK");
+  }
 
   next();
 });
@@ -87,6 +97,20 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// TODO: Changed Password After
+userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+
+    return JWTTimestamp < changedTimestamp;
+  }
+
+  return false;
 };
 
 const User = new mongoose.model("User", userSchema);
