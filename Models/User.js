@@ -111,7 +111,7 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
   }
 
   return false;
-};
+ };
 
 const User = new mongoose.model("User", userSchema);
 

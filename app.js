@@ -1,6 +1,8 @@
 const express = require("express")
 const morgan = require("morgan")
 
+const routes = require("./routes/index");
+
 const rateLimit = require("express-rate-limit") // Basic rate limiting middleware for Express. Use to limit repeated requests to public APIs and/or endpoints such as password reset.
 
 const helmet = require("helmet") // Helps protect Express apps from common web vulnerabilities by setting HTTP
@@ -57,6 +59,9 @@ app.use(mongosanitize());
 
 app.use(xss());
 
-// TODO add routes
+
+app.use(routes); 
 
 module.exports = app;
+
+
