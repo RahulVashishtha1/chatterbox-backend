@@ -16,12 +16,23 @@ const registerSocketServer = (server) => {
     console.log("User connected.");
     console.log(socket.id);
 
-    // newConnectionHandler
-  });
+    // TODO: newConnectionHandler
 
-  setInterval(() => {
-    // emit online user
-  }, [1000 * 8]);
+    // TODO: disconnectHandler
+    socket.on("disconnect", () => {});
+
+    // TODO: newMessageHandler
+    socket.on("new-message", (data) => {});
+
+    // TODO: chatHistoryHandler
+    socket.on("direct-chat-history", (data) => {});
+
+    // TODO: startTypingHandler
+    socket.on("start-typing", (data) => {});
+
+    // TODO: stopTypingHandler
+    socket.on("stop-typing", (data) => {});
+  });
 };
 
-module.exports = {registerSocketServer};
+module.exports = { registerSocketServer };
