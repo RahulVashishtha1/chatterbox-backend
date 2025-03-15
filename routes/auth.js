@@ -12,4 +12,4 @@ router.post('/login', authController.login);
 module.exports = router; 
 
 
-// localhost:8000/auth/signup
+// http://localhost:8000/auth/signup => METHOD: POST

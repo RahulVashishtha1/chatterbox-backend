@@ -1,4 +1,5 @@
 const catchAsync = require("../utilities/catchAsync");
+const Conversation = require("../Models/Conversation")
 
 // GET ME
 exports.getMe = catchAsync(async (req, res, next) => {

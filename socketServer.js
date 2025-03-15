@@ -2,6 +2,7 @@ const authSocket = require("./middleware/authSocket");
 const disconnectHandler = require("./socketHandlers/disconnectHandler");
 const chatHistoryHandler = require("./socketHandlers/getMessageHistoryHandler");
 const newConnectionHandler = require("./socketHandlers/newConnectionHandler");
+const newMessageHandler = require("./socketHandlers/newMessageHandler");
 const startTypingHandler = require("./socketHandlers/startTypingHandler");
 const stopTypingHandler = require("./socketHandlers/stopTypingHandler");
 
@@ -29,8 +30,10 @@ const registerSocketServer = (server) => {
       disconnectHandler(socket);
     });
 
-    // TODO: newMessageHandler
-    socket.on("new-message", (data) => {});
+    // ** DONE => newMessageHandler
+    socket.on("new-message", (data) => {
+      newMessageHandler(socket, data, io);
+    });
 
     // ** DONE => chatHistoryHandler
     socket.on("direct-chat-history", (data) => {
