@@ -70,18 +70,24 @@ const userSchema = new mongoose.Schema(
 // PRE SAVE HOOK
 userSchema.pre("save", async function (next) {
   // only run this function if otp is modified
-  if (this.isModified("otp") || this.otp) {
-    // hash the otp with the cost of 12
+  if (this.isModified("otp") && this.otp) {
+    if(this.otp){
+      // hash the otp with the cost of 12
     this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
     console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
+    }
+    
   }
 
-  if (this.isModified("password") || this.password) {
-    // hash the password with the cost of 12
+  if (this.isModified("password") && this.password) {
+    if(this.password){
+        // hash the password with the cost of 12
     this.password = await bcrypt.hash(this.password.toString(), 12);
 
     console.log(this.password.toString(), "FROM PRE SAVE HOOK");
+    }
+  
   }
 
   next();

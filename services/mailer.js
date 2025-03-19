@@ -2,14 +2,15 @@ const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const OTPTemplate = require("../Template/OTP");
 
-dotenv.config({ path: "./../config.env" });
+// dotenv.config({ path: "./../config.env" });
+const NODEMAILER_USER="chatterbox00100@gmail.com"
+const NODEMAILER_APP_PASSWORD = "kxevynmlzvntdnyb"
 
-const NODEMAILER_USER = process.env.NODEMAILER_USER;
-const NODEMAILER_APP_PASSWORD = process.env.NODEMAILER_APP_PASSWORD;
+// console.log(NODEMAILER_APP_PASSWORD, NODEMAILER_USER)
 
 // Create a transport using your email service
 const transporter = nodemailer.createTransport({
-  host: "smtp.google.com",
+  host: "smtp.gmail.com",
   port: 465,
   secure: true,
   service: "gmail",
@@ -21,6 +22,7 @@ const transporter = nodemailer.createTransport({
 
 const Mailer = async ({ name, otp, email }) => {
   const mailOptions = {
+    from: `"ChatterBox" <${NODEMAILER_USER}>`, 
     to: email,
     subject: "Verify Your ChatterBox Account",
     html: OTPTemplate({ name, otp }),

@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const socketServer = require("./socketServer");
 
 const http = require("http"); //http comes built-in with nodejs
-const server = http.createServer();
+const server = http.createServer(app);
 
 socketServer.registerSocketServer(server)
 

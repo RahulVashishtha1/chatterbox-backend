@@ -6,7 +6,7 @@ const { promisify } = require("util");
 const Mailer = require("../services/mailer");
 
 // Sign JWT Token
-const signToken = () => jwt.sign({ userId }, process.env.TOKEN_KEY);
+const signToken = (userId) => jwt.sign({ userId }, process.env.TOKEN_KEY);
 // Register New User
 exports.register = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -22,7 +22,7 @@ exports.register = catchAsync(async (req, res, next) => {
       status: "error",
       message: "Email already in use",
     });
-  } else if (existing_user.verified === false) {
+  } else if (existing_user && existing_user.verified === false) {
     // rewrite doc and create new user
     await User.findOneAndDelete({ email: email });
   }
@@ -95,6 +95,8 @@ exports.resendOTP = catchAsync(async (req, res, next) => {
     lowerCaseAlphabets: false,
   });
 
+  console.log('Newly generated OTP', new_otp)
+
   const otp_expiry_time = Date.now() + 10 * 60 * 1000; // 10 mins after otp is created
 
   user.otp_expiry_time = otp_expiry_time;
@@ -115,10 +117,14 @@ exports.resendOTP = catchAsync(async (req, res, next) => {
 exports.verifyOTP = catchAsync(async (req, res, next) => {
   const { email, otp } = req.body;
 
+
+
   const user = await User.findOne({
-    email: email,
+    email,
     otp_expiry_time: { $gt: Date.now() },
   });
+
+  console.log(user, 'user from verify otp controller')
 
   if (!user) {
     return res.status(400).json({
