@@ -216,6 +216,8 @@ exports.protect = catchAsync(async (req, res, next) => {
       token = req.cookies.jwt;
     }
 
+    // console.log("TOKEN_>",token)
+
     if (!token) {
       return res.status(401).json({
         message: "You are not logged in! Please log in to access application",
@@ -223,9 +225,10 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
 
     // 2) Verification of token
-    const decoded = await promisify(jwt.verify)(token, process.env.TOKEN_KEY);
+    // const decoded = await promisify(jwt.verify)(token, process.env.TOKEN_KEY);
+    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
 
-    console.log(decoded);
+    // console.log(decoded);
 
     // 3) Check if user still exists
     const this_user = await User.findById(decoded.userId);
