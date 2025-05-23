@@ -1,5 +1,6 @@
 const catchAsync = require("../utilities/catchAsync");
-const Conversation = require("../Models/Conversation")
+const Conversation = require("../Models/Conversation");
+const User = require("../Models/User");
 
 // GET ME
 exports.getMe = catchAsync(async (req, res, next) => {
@@ -101,6 +102,7 @@ exports.getUsers = catchAsync(async (req, res, next) => {
     verified: true,
   }).select("name avatar _id status");
 
+  // console.log("SENDING USERS DATA ->", other_verified_users);
   res.status(200).json({
     status: "success",
     message: "Users found successfully!",
@@ -159,12 +161,11 @@ exports.getConversations = catchAsync(async (req, res, next) => {
     .populate("messages")
     .populate("participants");
 
-
-    // send the list of conversations as a response
-    res.status(200).json({
-      status: "success",
-      data: {
-       conversations,
-      }
-    })
+  // send the list of conversations as a response
+  res.status(200).json({
+    status: "success",
+    data: {
+      conversations,
+    },
+  });
 });
