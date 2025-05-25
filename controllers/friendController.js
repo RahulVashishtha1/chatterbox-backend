@@ -33,21 +33,30 @@ exports.sendFriendRequest = catchAsync(async (req, res) => {
     });
   }
 
-  // Check if a request already exists
-  const existingRequest = await FriendRequest.findOne({
+  // Check if a pending request already exists
+  const existingPendingRequest = await FriendRequest.findOne({
     $or: [
       { sender: senderId, recipient: recipientId },
       { sender: recipientId, recipient: senderId }
-    ]
+    ],
+    status: "pending"
   });
 
-  if (existingRequest) {
+  if (existingPendingRequest) {
     return res.status(400).json({
       status: "error",
-      message: "A friend request already exists between these users",
-      requestStatus: existingRequest.status
+      message: "A pending friend request already exists between these users",
+      requestStatus: existingPendingRequest.status
     });
   }
+
+  // Clean up any old rejected requests to allow new requests
+  await FriendRequest.deleteMany({
+    $or: [
+      { sender: senderId, recipient: recipientId, status: "rejected" },
+      { sender: recipientId, recipient: senderId, status: "rejected" }
+    ]
+  });
 
   // Create new friend request
   const friendRequest = await FriendRequest.create({
@@ -290,6 +299,14 @@ exports.removeFriend = catchAsync(async (req, res) => {
     friendId,
     { $pull: { friends: userId } }
   );
+
+  // Clean up the accepted friend request record
+  await FriendRequest.findOneAndDelete({
+    $or: [
+      { sender: userId, recipient: friendId, status: "accepted" },
+      { sender: friendId, recipient: userId, status: "accepted" }
+    ]
+  });
 
   res.status(200).json({
     status: "success",
