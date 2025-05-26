@@ -7,10 +7,16 @@ const chatHistoryHandler = async (socket, data) => {
 
     console.log(data, "conversation Id");
 
-    // Find the conversation by ID and populate the messages
+    // Find the conversation by ID and populate the messages with author details
     const conversation = await Conversation.findById(conversationId)
       .select("messages")
-      .populate("messages");
+      .populate({
+        path: "messages",
+        populate: {
+          path: "author",
+          select: "name _id"
+        }
+      });
 
     if (!conversation) {
       return socket.emit("error", { message: "Conversation not found" });

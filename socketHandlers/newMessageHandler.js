@@ -2,7 +2,7 @@ const Conversation = require("../Models/Conversation");
 const Message = require("../Models/Message");
 
 const newMessageHandler = async (socket, data, io) => {
-  console.log(DataTransfer, "new-message");
+  console.log(data, "new-message");
 
   const { message, conversationId } = data;
 
@@ -29,9 +29,10 @@ const newMessageHandler = async (socket, data, io) => {
 
     // 3. Push the messageId to the conversation messages array
     conversation.messages.push(newMessage._id);
+    await conversation.save();
 
     // 4. Populate the conversation with messages and participants
-    const updatedConversation = await conversation
+    const updatedConversation = await Conversation
       .findById(conversationId)
       .populate("messages")
       .populate("participants");
@@ -43,12 +44,15 @@ const newMessageHandler = async (socket, data, io) => {
 
     console.log(onlineParticipants);
 
-    // 6. Emit the 'new-message' event to all online participants
+    // 6. Populate the message author before sending
+    const populatedMessage = await Message.findById(newMessage._id).populate('author', 'name _id');
+
+    // 7. Emit the 'new-message' event to all online participants
     onlineParticipants.forEach((participant) => {
         console.log(participant.socketId);
         io.to(participant.socketId).emit('new-direct-chat', {
             conversationId: conversationId,
-            message: newMessage,
+            message: populatedMessage,
         });
     })
   } catch (error) {
