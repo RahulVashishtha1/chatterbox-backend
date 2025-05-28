@@ -6,7 +6,7 @@ const newConnectionHandler = async (socket, io) => {
   const { userId } = socket.user;
 
   // Log new user connected
-  console.log(`User connected: ${socket.id}`);
+  console.log(`User connected: ${socket.id}, User ID: ${userId}`);
 
   // Add SocketId to user record and set status to online
   const user = await User.findByIdAndUpdate(
@@ -22,6 +22,8 @@ const newConnectionHandler = async (socket, io) => {
   );
 
   if (user) {
+    console.log(`Updated user ${user.name} (${user._id}) with socket ID ${socket.id}`);
+    
     // Broadcast to everyone the new user connected
     socket.broadcast.emit("user-connected", {
       message: `User ${user.name} has connected`,
