@@ -13,6 +13,7 @@ const startTypingHandler = async (socket, data, io) => {
     const dataToSend = {
       conversationId,
       typing: true,
+      typingUserId: socket.userId, // Include who is typing
     };
 
     // Emit 'start-typing' event to the socketId of the user

@@ -24,4 +24,7 @@ router.get(
   userController.getConversations
 );
 
+router.get("/profile", userController.getCurrentUserProfile);
+router.patch("/update-name", userController.updateUserName);
+
 module.exports = router;

@@ -1,5 +1,6 @@
 const catchAsync = require("../utilities/catchAsync");
-const Conversation = require("../Models/Conversation")
+const Conversation = require("../Models/Conversation");
+const User = require("../Models/User");
 
 // GET ME
 exports.getMe = catchAsync(async (req, res, next) => {
@@ -101,6 +102,7 @@ exports.getUsers = catchAsync(async (req, res, next) => {
     verified: true,
   }).select("name avatar _id status");
 
+  // console.log("SENDING USERS DATA ->", other_verified_users);
   res.status(200).json({
     status: "success",
     message: "Users found successfully!",
@@ -159,12 +161,78 @@ exports.getConversations = catchAsync(async (req, res, next) => {
     .populate("messages")
     .populate("participants");
 
+  // send the list of conversations as a response
+  res.status(200).json({
+    status: "success",
+    data: {
+      conversations,
+    },
+  });
+});
 
-    // send the list of conversations as a response
-    res.status(200).json({
-      status: "success",
-      data: {
-       conversations,
+// Get current user profile
+exports.getCurrentUserProfile = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'User not found'
+    });
+  }
+  
+  return res.status(200).json({
+    status: 'success',
+    data: {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        status: user.status,
+        avatar: user.avatar,
+        jobTitle: user.jobTitle,
+        bio: user.bio,
+        country: user.country
       }
-    })
+    }
+  });
+});
+
+// Update user name
+exports.updateUserName = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const { name } = req.body;
+  
+  if (!name) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Name is required'
+    });
+  }
+  
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { name },
+    { new: true }
+  );
+  
+  if (!user) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'User not found'
+    });
+  }
+  
+  return res.status(200).json({
+    status: 'success',
+    message: 'Name updated successfully',
+    data: {
+      user: {
+        _id: user._id,
+        name: user.name
+      }
+    }
+  });
 });

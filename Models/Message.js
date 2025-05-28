@@ -9,47 +9,41 @@
 
 const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema;
-
-const documentSchema = new Schema({
-  url: { type: String },
-  name: { type: String },
-  size: { type: Number },
-});
-
-const messageSchema = new Schema({
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-  },
-  content: {
-    type: String,
-    trim: true,
-  },
-  media: [
-    {
-      type: {
-        type: String,
-        enum: ["image", "video"],
-      },
-      url: {
-        type: String,
-      },
+const messageSchema = new mongoose.Schema(
+  {
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-  ],
-  audioUrl: {
-    type: String,
+    content: {
+      type: String,
+    },
+    type: {
+      type: String,
+      enum: ["Text", "Media", "Document", "Giphy", "Audio"],
+      default: "Text",
+    },
+    media: [
+      {
+        type: {
+          type: String,
+          enum: ["image", "video"],
+        },
+        url: String,
+      },
+    ],
+    document: {
+      url: String,
+      name: String,
+      size: Number,
+    },
+    giphyUrl: String,
+    audioUrl: String,
   },
-  giphyUrl: {
-    type: String,
-  },
-  type: {
-    type: String,
-    enum: ["Media", "Text", "Document", "Giphy", "Audio"],
-  },
-  document: documentSchema,
-});
+  { timestamps: true }
+);
 
-const Message = new mongoose.model("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 
 module.exports = Message;

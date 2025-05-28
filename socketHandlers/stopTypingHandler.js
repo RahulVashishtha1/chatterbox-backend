@@ -13,6 +13,7 @@ const stopTypingHandler = async (socket, data, io) => {
     const dataToSend = {
       conversationId,
       typing: false,
+      typingUserId: socket.userId, // Include who stopped typing
     };
 
     // Emit 'stop-typing' event to the socketId of the user

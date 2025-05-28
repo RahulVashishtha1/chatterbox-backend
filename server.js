@@ -26,3 +26,20 @@ mongoose
     console.log("database connection failed. Server not started");
     console.log(error);
   });
+
+// Import upload routes
+const uploadRoutes = require('./routes/upload');
+
+// Register upload routes
+app.use('/api/upload', uploadRoutes);
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Add CORS headers for file access
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  next();
+});

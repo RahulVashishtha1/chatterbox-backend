@@ -1,59 +1,144 @@
 const Conversation = require("../Models/Conversation");
 const Message = require("../Models/Message");
+const User = require("../Models/User");
+
 
 const newMessageHandler = async (socket, data, io) => {
-  console.log(DataTransfer, "new-message");
+  console.log('New message data received:', JSON.stringify(data));
+  console.log('Socket user:', socket.user);
+  console.log('Socket ID:', socket.id);
 
   const { message, conversationId } = data;
 
-  const { author, content, media, audioUrl, document, type, giphyUrl } =
-    message;
+  if (!conversationId) {
+    console.error('Missing conversation ID in message data');
+    return socket.emit("error", { 
+      status: 'error',
+      message: "Missing conversation ID" 
+    });
+  }
+
+  // Get the user ID from the socket
+  const authorId = socket.user.userId;
+  
+  // Fetch the user to verify
+  const user = await User.findById(authorId);
+  console.log('Message sender user:', {
+    id: user?._id,
+    name: user?.name,
+    email: user?.email
+  });
+
+  // Extract message data
+  const { content, media, audioUrl, document, type, giphyUrl } = message;
+
+  // For media messages, ensure the media array is properly formatted
+  let formattedMedia = media;
+  if (type === 'Media' && Array.isArray(media)) {
+    formattedMedia = media.map(item => ({
+      type: item.type || 'image',
+      url: item.url
+    }));
+    console.log('Formatted media data:', formattedMedia);
+  }
 
   try {
-    // 1. Find the conversation by conversationId
-    const conversation = await Conversation.findById(conversationId);
+    // Find the conversation - log the ID we're searching for
+    console.log(`Looking for conversation with ID: ${conversationId}`);
+    
+    // Try to find the conversation with more flexible ID handling
+    let conversation;
+    
+    // First try direct ID match
+    conversation = await Conversation.findById(conversationId);
+    
+    // If not found, try string comparison (in case of ObjectId vs string issues)
     if (!conversation) {
-      return socket.emit("error", { message: "Conversation not found!" });
+      console.log('Direct ID lookup failed, trying string comparison...');
+      conversation = await Conversation.find({}).then(convs => 
+        convs.find(c => c._id.toString() === conversationId.toString())
+      );
     }
+    
+    // If still not found, try to find by participants
+    if (!conversation) {
+      console.error(`Conversation not found with ID: ${conversationId}`);
+      
+      // Try to find conversation by participants
+      conversation = await Conversation.findOne({
+        participants: { $all: [authorId] }
+      });
+      
+      if (conversation) {
+        console.log(`Found alternative conversation: ${conversation._id}`);
+        // Use this conversation instead
+        console.log('Using alternative conversation for message');
+      } else {
+        return socket.emit("error", { 
+          status: 'error',
+          message: "Conversation not found!" 
+        });
+      }
+    }
+    
+    console.log('Found conversation:', {
+      id: conversation._id,
+      participants: conversation.participants
+    });
 
-    // 2. Create a new messageusing the message Model
+    // Create new message with the correct author ID
     const newMessage = await Message.create({
-      author,
+      author: authorId,
       content,
-      media,
+      media: formattedMedia,
       audioUrl,
       document,
       type,
       giphyUrl,
     });
 
-    // 3. Push the messageId to the conversation messages array
+    console.log('New message created:', newMessage);
+
+    // Add message to conversation
     conversation.messages.push(newMessage._id);
+    await conversation.save();
 
-    // 4. Populate the conversation with messages and participants
-    const updatedConversation = await conversation
-      .findById(conversationId)
-      .populate("messages")
-      .populate("participants");
+    // Populate message with author details
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate('author', 'name _id email')
+      .lean();
 
-    // 5. Find the participants who are online (status === "Online") and have a socketId
-    const onlineParticipants = updatedConversation.participants.filter(
-      (participant) => participant.status === "Online" && participant.socketId
-    );
+    console.log('Populated message to send:', {
+      id: populatedMessage._id,
+      author: populatedMessage.author,
+      authorName: populatedMessage.author?.name,
+      type: populatedMessage.type
+    });
 
-    console.log(onlineParticipants);
-
-    // 6. Emit the 'new-message' event to all online participants
-    onlineParticipants.forEach((participant) => {
-        console.log(participant.socketId);
-        io.to(participant.socketId).emit('new-direct-chat', {
-            conversationId: conversationId,
-            message: newMessage,
+    // Send message to all participants
+    conversation.participants.forEach((participantId) => {
+      // Find the socket ID for this participant
+      const participantUser = User.findById(participantId);
+      if (participantUser && participantUser.socketId) {
+        io.to(participantUser.socketId).emit('new-direct-chat', {
+          conversationId: conversation._id,
+          message: populatedMessage,
         });
-    })
+      }
+    });
+
+    // Send success response
+    socket.emit('message-sent', {
+      status: 'success',
+      message: populatedMessage
+    });
   } catch (error) {
-    console.error("Error handling new message:", error);
-    socket.emit("error", { message: "Failed to send message" });
+    console.error('Error handling new message:', error);
+    socket.emit("error", { 
+      status: 'error',
+      message: "Error sending message",
+      error: error.message 
+    });
   }
 };
 
