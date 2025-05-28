@@ -35,3 +35,6 @@ Thumbs.db
 
 # Optional: Ignore package-lock.json (only if you use yarn)
 # package-lock.json
+
+# Uploaded files
+uploads/

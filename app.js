@@ -41,7 +41,13 @@ app.use(bodyParser.json({}));
 
 app.use(bodyParser.urlencoded({extended:true}));
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // disable the header, or
+    // or use this to allow cross-origin:
+    // crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 
 app.use(morgan("dev"));
 
@@ -61,18 +67,18 @@ app.use(mongosanitize());
 
 app.use(xss());
 
-// Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Add CORS headers specifically for file access
-app.use((req, res, next) => {
-  if (req.path.startsWith('/uploads')) {
-    res.header('Access-Control-Allow-Origin', '*');
+// ✅ Corrected middleware: apply CORS headers before serving static files
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // Or specify your frontend URL if needed
     res.header('Access-Control-Allow-Methods', 'GET');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  }
-  next();
-});
+    next();
+  },
+  express.static(path.join(__dirname, 'uploads'))
+);
+
 
 // Add a route to check if files are accessible
 app.get('/api/check-file', (req, res) => {
