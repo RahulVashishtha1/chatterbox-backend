@@ -17,6 +17,7 @@ exports.getMe = catchAsync(async (req, res, next) => {
 
 // UPDATE ME
 exports.updateMe = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   const { name, jobTitle, bio, country } = req.body;
   const { _id } = req.user;
 
