@@ -5,6 +5,7 @@ const newConnectionHandler = require("./socketHandlers/newConnectionHandler");
 const newMessageHandler = require("./socketHandlers/newMessageHandler");
 const startTypingHandler = require("./socketHandlers/startTypingHandler");
 const stopTypingHandler = require("./socketHandlers/stopTypingHandler");
+const { messageStatusHandler, handleMessageDelivered, handleMessageRead } = require("./socketHandlers/messageStatusHandler");
 
 const registerSocketServer = (server) => {
   const io = require("socket.io")(server, {
@@ -48,6 +49,19 @@ const registerSocketServer = (server) => {
     // ** DONE => stopTypingHandler
     socket.on("stop-typing", (data) => {
       stopTypingHandler(socket, data, io);
+    });
+
+    // ** DONE => message status handlers
+    socket.on("message-status-update", (data) => {
+      messageStatusHandler(socket, data, io);
+    });
+
+    socket.on("message-delivered", (data) => {
+      handleMessageDelivered(socket, data, io);
+    });
+
+    socket.on("message-read", (data) => {
+      handleMessageRead(socket, data, io);
     });
   });
 };

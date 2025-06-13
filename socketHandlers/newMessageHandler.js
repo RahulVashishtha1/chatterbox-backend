@@ -114,34 +114,28 @@ const newMessageHandler = async (socket, data, io) => {
       type: populatedMessage.type,
     });
 
-    // NOTE -> this was causing the issue due to which conversations were not
-    // updating automatically
-    // Send message to all participants
-    // conversation.participants.forEach((participantId) => {
-    //   // Find the socket ID for this participant
-    //   const participantUser = User.findById(participantId);
-    //   if (participantUser && participantUser.socketId) {
-    //     io.to(participantUser.socketId).emit('new-direct-chat', {
-    //       conversationId: conversation._id,
-    //       message: populatedMessage,
-    //     });
-    //   }
-    // });
+    // Create a room ID for this conversation
+    const roomId = `conversation_${conversation._id}`;
 
+    // Get all participants
     const participantUsers = await User.find({
       _id: { $in: conversation.participants },
     });
 
+    // Join all participants to the room
     participantUsers.forEach((user) => {
-      if (user.socketId && user._id.toString() !== authorId.toString()) {
-        io.to(user.socketId).emit("new-direct-chat", {
-          conversationId: conversation._id,
-          message: populatedMessage,
-        });
+      if (user.socketId) {
+        socket.join(roomId);
       }
     });
 
-    // Send success response
+    // Broadcast to the room (excluding sender)
+    socket.to(roomId).emit("new-direct-chat", {
+      conversationId: conversation._id,
+      message: populatedMessage,
+    });
+
+    // Send success response to sender
     socket.emit("message-sent", {
       status: "success",
       message: populatedMessage,
