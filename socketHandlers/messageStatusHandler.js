@@ -40,16 +40,15 @@ const messageStatusHandler = async (socket, data, io) => {
       return;
     }
 
-    // Broadcast status update to all participants
-    conversation.participants.forEach(participant => {
-      if (participant.socketId) {
-        io.to(participant.socketId).emit('message-status-update', {
-          messageId,
-          conversationId,
-          status,
-          updatedAt: new Date()
-        });
-      }
+    // Create room ID
+    const roomId = `conversation_${conversationId}`;
+
+    // Broadcast status update to the room
+    io.to(roomId).emit('message-status-update', {
+      messageId,
+      conversationId,
+      status,
+      updatedAt: new Date()
     });
 
     console.log(`Message ${messageId} status updated to ${status}`);
@@ -86,16 +85,15 @@ const handleMessageDelivered = async (socket, data, io) => {
       return;
     }
 
-    // Broadcast status update to all participants
-    conversation.participants.forEach(participant => {
-      if (participant.socketId) {
-        io.to(participant.socketId).emit('message-status-update', {
-          messageId,
-          conversationId,
-          status: "delivered",
-          updatedAt: new Date()
-        });
-      }
+    // Create room ID
+    const roomId = `conversation_${conversationId}`;
+
+    // Broadcast status update to the room
+    io.to(roomId).emit('message-status-update', {
+      messageId,
+      conversationId,
+      status: "delivered",
+      updatedAt: new Date()
     });
 
     console.log(`Message ${messageId} marked as delivered`);
@@ -144,16 +142,15 @@ const handleMessageRead = async (socket, data, io) => {
       return;
     }
 
-    // Broadcast status update to all participants
-    conversation.participants.forEach(participant => {
-      if (participant.socketId) {
-        io.to(participant.socketId).emit('message-status-update', {
-          messageId,
-          conversationId,
-          status: "read",
-          updatedAt: new Date()
-        });
-      }
+    // Create room ID
+    const roomId = `conversation_${conversationId}`;
+
+    // Broadcast status update to the room
+    io.to(roomId).emit('message-status-update', {
+      messageId,
+      conversationId,
+      status: "read",
+      updatedAt: new Date()
     });
 
     console.log(`Message ${messageId} marked as read`);

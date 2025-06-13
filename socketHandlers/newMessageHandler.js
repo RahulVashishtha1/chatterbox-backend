@@ -122,15 +122,8 @@ const newMessageHandler = async (socket, data, io) => {
       _id: { $in: conversation.participants },
     });
 
-    // Join all participants to the room
-    participantUsers.forEach((user) => {
-      if (user.socketId) {
-        socket.join(roomId);
-      }
-    });
-
     // Broadcast to the room (excluding sender)
-    socket.to(roomId).emit("new-direct-chat", {
+    io.to(roomId).emit("new-direct-chat", {
       conversationId: conversation._id,
       message: populatedMessage,
     });
