@@ -6,6 +6,9 @@ const newMessageHandler = require("./socketHandlers/newMessageHandler");
 const startTypingHandler = require("./socketHandlers/startTypingHandler");
 const stopTypingHandler = require("./socketHandlers/stopTypingHandler");
 const { messageStatusHandler, handleMessageDelivered, handleMessageRead } = require("./socketHandlers/messageStatusHandler");
+const audioCallHandler = require("./socketHandlers/audioCallHandler");
+const callRejectedHandler = require("./socketHandlers/callRejectedHandler");
+const hangUpHandler = require("./socketHandlers/hangUpHandler");
 
 const registerSocketServer = (server) => {
   const io = require("socket.io")(server, {
@@ -63,6 +66,11 @@ const registerSocketServer = (server) => {
     socket.on("message-read", (data) => {
       handleMessageRead(socket, data, io);
     });
+
+    // Register audio call signaling handler
+    audioCallHandler(io, socket);
+    callRejectedHandler(io, socket);
+    hangUpHandler(io, socket);
   });
 };
 

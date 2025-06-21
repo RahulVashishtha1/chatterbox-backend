@@ -11,7 +11,7 @@ const verifyTokenSocket = (socket, next) => {
   try {
     const decoded = jwt.verify(token, config.TOKEN_KEY);
     socket.user = decoded;
-     socket.userId = decoded.userId || decoded.id || decoded._id;  // added this new line
+    socket.userId = decoded.userId || decoded.id || decoded._id || decoded.user_id;
   } catch (err) {
     const socketError = new Error("NOT_AUTHORIZED");
     return next(socketError);

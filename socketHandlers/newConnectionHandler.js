@@ -10,6 +10,17 @@ const newConnectionHandler = async (socket, io) => {
   console.log(`User connected: ${socket.id}, User ID: ${userId}`);
 
   try {
+    // Log the socket's user ID
+    console.log(`[Connection] New connection from socket ID: ${socket.id}, User ID: ${socket.userId}`);
+    
+    // Join a room with the user's ID
+    if (socket.userId) {
+      socket.join(socket.userId);
+      console.log(`[Connection] Socket ${socket.id} joined room ${socket.userId}`);
+    } else {
+      console.log(`[Connection] Warning: Socket ${socket.id} connected without a userId.`);
+    }
+
     // Add SocketId to user record and set status to online
     const user = await User.findByIdAndUpdate(
       userId,
