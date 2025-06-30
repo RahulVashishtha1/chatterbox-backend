@@ -123,7 +123,7 @@ const newMessageHandler = async (socket, data, io) => {
     });
 
     // Broadcast to the room (excluding sender)
-    io.to(roomId).emit("new-direct-chat", {
+    socket.to(roomId).emit("new-direct-chat", {
       conversationId: conversation._id,
       message: populatedMessage,
     });
