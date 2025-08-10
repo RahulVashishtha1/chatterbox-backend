@@ -1,3 +1,4 @@
+require('dotenv').config({ path: './config.env' }); 
 const express = require("express")
 const morgan = require("morgan")
 const path = require("path")
@@ -67,5 +68,14 @@ app.use(xss());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(routes); 
+
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({
+    status: 'error',
+    message: err.message || 'Internal Server Error',
+    error: err
+  });
+});
 
 module.exports = app;
