@@ -2,8 +2,8 @@ const app = require("./app");
 const express = require("express");
 const path = require("path");
 
-const dotenv = require("dotenv");
-dotenv.config({ path: "./config.env" });
+// Unified environment loader
+require('./utils/loadEnv')();
 
 const mongoose = require("mongoose");
 const socketServer = require("./socketServer");
@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 socketServer.registerSocketServer(server)
 
-const PORT = process.env.PORT || process.env.API_PORT;
+const PORT = process.env.PORT || process.env.API_PORT || 8000;
 
 
 // Import upload routes

@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
-
-dotenv.config({ path: "../config.env" });
+require('../utils/loadEnv')();
 
 const config = process.env;
 

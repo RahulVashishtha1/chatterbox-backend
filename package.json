@@ -11,6 +11,7 @@
   "author": "Rahul and Kirti",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^20.12.7",
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
     "cloudinary": "^1.41.3",

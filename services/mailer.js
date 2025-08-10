@@ -1,8 +1,6 @@
 const nodemailer = require("nodemailer");
-const dotenv = require("dotenv");
+require('../utils/loadEnv')();
 const OTPTemplate = require("../Template/OTP");
-
-dotenv.config({ path: "./../config.env" });
 const NODEMAILER_USER = process.env.NODEMAILER_USER;
 const NODEMAILER_APP_PASSWORD = process.env.NODEMAILER_APP_PASSWORD;
 

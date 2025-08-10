@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './config.env' }); 
+require('./utils/loadEnv')();
 const express = require("express")
 const morgan = require("morgan")
 const path = require("path")
@@ -66,6 +66,15 @@ app.use(mongosanitize());
 app.use(xss());
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Basic root and health endpoints for uptime checks and human-friendly root
+app.get('/', (req, res) => {
+  res.status(200).send('ChatterBox API is running');
+});
+
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
 
 app.use(routes); 
 
