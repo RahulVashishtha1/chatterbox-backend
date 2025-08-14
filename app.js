@@ -55,7 +55,7 @@ const limiter = rateLimit({   //to limit the api calls on our server
       message : "Too many requests from this IP, please try again in an hour "
 });
 
-app.use("/api", limiter);
+app.use("/api", limiter); 
 
 app.use(express.urlencoded({
     extended: true,
@@ -65,7 +65,10 @@ app.use(mongosanitize());
 
 app.use(xss());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve local uploads in development only; production uses Cloudinary
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
 
 // Basic root and health endpoints for uptime checks and human-friendly root
 app.get('/', (req, res) => {

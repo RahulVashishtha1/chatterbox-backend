@@ -14,6 +14,7 @@ const server = http.createServer(app);
 socketServer.registerSocketServer(server)
 
 const PORT = process.env.PORT || process.env.API_PORT || 8000;
+console.log("Allowed CORS Origin:", process.env.CORS_ORIGIN || "*");
 
 
 // Import upload routes
@@ -22,8 +23,7 @@ const uploadRoutes = require('./routes/upload');
 // Register upload routes
 app.use('/api/upload', uploadRoutes);
 
-// Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// uploads static is handled in app.js for dev only
 
 // Add CORS headers for file access
 app.use((req, res, next) => {

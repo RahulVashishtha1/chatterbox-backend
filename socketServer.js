@@ -11,10 +11,12 @@ const callRejectedHandler = require("./socketHandlers/callRejectedHandler");
 const hangUpHandler = require("./socketHandlers/hangUpHandler");
 
 const registerSocketServer = (server) => {
+  const allowedOrigin = process.env.CORS_ORIGIN || "*"; // e.g., https://your-frontend.vercel.app
   const io = require("socket.io")(server, {
     cors: {
-      origin: "*",
-      method: ["GET", "POST"],
+      origin: allowedOrigin,
+      methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
